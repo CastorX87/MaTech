@@ -1,7 +1,10 @@
 #pragma once
 #include "stdafx.h"
+#include "TextureManager.h"
+#include "Utility.h"
 
 using namespace sf;
+using namespace std;
 
 enum class ObjectFeatureSet
 {
@@ -20,16 +23,13 @@ protected:
 
 	BaseObject()
 	{
+		DebugPrintInfo("BaseObject::BaseObject()");
 		mFeatureSet = ObjectFeatureSet::OFS_NOTHING;
 	}
 
 	void ExtendFeatureSet(ObjectFeatureSet extension)
 	{
 		mFeatureSet = (ObjectFeatureSet)((int)mFeatureSet | (int)extension);
-	}
-
-	virtual ~BaseObject()
-	{
 	}
 
 public:
@@ -43,10 +43,15 @@ public:
 		return ((int)mFeatureSet & (int)featureSet) == (int)featureSet;
 	}
 
+	virtual ~BaseObject()
+	{
+		DebugPrintInfo("BaseObject::~BaseObject()");
+	}
 };
 
 class UniqueObject :
-	virtual public BaseObject
+	virtual public BaseObject,
+	public NonCopyable
 {
 protected:
 	String mName;
@@ -54,12 +59,14 @@ protected:
 public:
 	UniqueObject(const String& name)
 	{
+		DebugPrintInfo(String("UniqueObject::UniqueObject(") + name + ")");
 		mName = name;
 		ExtendFeatureSet(ObjectFeatureSet::OFS_UNIQUE);
 	}
 
 	virtual ~UniqueObject()
 	{
+		DebugPrintInfo(String("UniqueObject::~UniqueObject(") + mName + ")");
 	}
 
 	const String& GetName() const
@@ -78,11 +85,15 @@ protected:
 public:
 	BaseTransformable(const b2Vec2& pos = b2Vec2(0, 0), float angle = 0)
 	{
+		DebugPrintInfo(String("UniqueObject::UniqueObject()"));
 		ExtendFeatureSet(ObjectFeatureSet::OFS_TRANSFORMABLE);
 		mPos = pos;
 		mAngle = angle;
 	}
-	virtual ~BaseTransformable()	{	}
+	virtual ~BaseTransformable()
+	{
+		DebugPrintInfo(String("UniqueObject::~UniqueObject()"));
+	}
 
 	virtual b2Vec2	GetPosition() const									{ return mPos; }
 	virtual float		GetAngle() const										{ return mAngle; }
@@ -99,130 +110,136 @@ protected:
 public:
 	BaseDrawable(float drawPriority = FLT_MAX)
 	{
+		DebugPrintInfo(String("BaseDrawable::BaseDrawable()"));
 		mDrawPriority = drawPriority;
 		ExtendFeatureSet(ObjectFeatureSet::OFS_DRAWABLE);
 	}
-	virtual ~BaseDrawable() {  }
+	virtual ~BaseDrawable()
+	{
+		DebugPrintInfo(String("BaseDrawable::~BaseDrawable()"));
+	}
 
-	virtual void Draw() = 0;
+	virtual void Draw(RenderTexture* renderTexture) const = 0;
 	virtual float GetDrawPriority() const								{ return mDrawPriority; }
 	virtual void SetDrawPriority(float newDrawPriority) {	mDrawPriority = newDrawPriority; }
+};
+
+class Background :
+	virtual public BaseDrawable
+{
+protected:
+	Texture * mTexturePtr;
+	Sprite* mSprite;
+public:
+	Background(const String& textureName) :
+		BaseDrawable(0)
+	{
+		DebugPrintInfo(String("BackgroundDrawable::BackgroundDrawable()"));
+		mTexturePtr = TextureManager::GetInstance().LoadTexture(textureName);
+		mSprite = new Sprite();
+		mSprite->setTexture(*mTexturePtr);
+	}
+	virtual ~Background()
+	{
+		DebugPrintInfo(String("BackgroundDrawable::~BackgroundDrawable()"));
+	}
+
+	virtual void Draw(RenderTexture* renderTexture) const;
 };
 
 class BasePhysicalBody :
 	public BaseTransformable
 {
 protected:
-	b2World *mWorldPtr;
-
-	b2Shape mShape;
-	b2BodyDef mBodyDef;
-	b2Body *mBody;
+	b2World * mWorldPtr;									// Must NOT be deleted!
+	b2Body *mBody;												// Rigid body object. Must be deleted using mWorldPtr
+	vector<b2Fixture*> mBodyFixturePtrs;	// List of fixtures used by this object. All of them must be deleted using mBody
 
 public:
 	BasePhysicalBody() :
 		BaseTransformable()
 	{
+		DebugPrintInfo(String("BasePhysicalBody::BasePhysicalBody()"));
 		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
 	}
 
-	BasePhysicalBody(b2World* world, b2Shape* shape, float density, float friction, const b2Vec2& pos = b2Vec2(0, 0), float angle = 0) :
-		BaseTransformable(pos, angle)
+	BasePhysicalBody(b2World* world, const b2BodyDef& bodyDef, const vector<b2FixtureDef>& fixtureDefs) :
+		BaseTransformable(bodyDef.position, bodyDef.angle)
 	{
 		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
-		//mBody = physBody;
-		mBody->SetTransform(pos, angle);
+		mWorldPtr->CreateBody(&bodyDef);
 	}
+	virtual ~BasePhysicalBody()
+	{
+		DebugPrintInfo(String("BasePhysicalBody::~BasePhysicalBody()"));
+		for (auto fixturePtr : mBodyFixturePtrs)
+		{
+			mBody->DestroyFixture(fixturePtr);
+		}
+		mWorldPtr->DestroyBody(mBody);
+	};
 
+	virtual size_t GetFixtureCount() { return mBodyFixturePtrs.size(); }
+	virtual b2Fixture* GetFixturePtr(int i) { return mBodyFixturePtrs[i]; }
+	virtual const b2Fixture* GetFixturePtr(int i) const { return mBodyFixturePtrs[i]; }
 	virtual b2Vec2 GetPosition() const override
 	{
 		return mBody->GetPosition();
 	}
-
 	virtual float GetAngle() const override
 	{
 		return mBody->GetAngle();
 	}
-
 	virtual void SetPosition(const b2Vec2& newPos) override
 	{
 		mBody->SetTransform(newPos, GetAngle());
 	}
-
 	virtual void SetAngle(float newAngle) override
 	{
 		mBody->SetTransform(GetPosition(), newAngle);
 	}
-
-	b2Body* GetPhysBody() { return mBody; }
-	const b2Body* GetPhysBody() const { return mBody; }
-
-	void SetPhysBody(b2Body* newRigidBody) { mBody = newRigidBody; }
-
-	virtual ~BasePhysicalBody()
-	{
-		mWorldPtr->DestroyBody(mBody);
-	};
+	b2Body* GetBody() { return mBody; }
+	const b2Body* GetBody() const { return mBody; }
 };
-//
-//class SimpleRealObject :
-//	public UniqueObject,
-//	public BasePhysicalBody,
-//	public BaseDrawable
-//{
-//protected:
-//	Model * mModel;
-//
-//public:
-//	SimpleRealObject(const wstring& name, const wstring& modelName, const btTransform& transform);
-//
-//	const Model* GetModel() const
-//	{
-//		return mModel;
-//	}
-//
-//	Model* GetModel()
-//	{
-//		return mModel;
-//	}
-//
-//	virtual void Draw(Graphics::RenderMode renderMode, const glm::mat4& matV, const glm::mat4& matP);
-//
-//	virtual bool IsVisibleInFrustum(const Frustum& frustum) const
-//	{
-//		btVector3 aabbMin, aabbMax;
-//		GetRigidBody()->getAabb(aabbMin, aabbMax);
-//		return frustum.IntersectAabb(Util::BtVec3ToVec3(aabbMin), Util::BtVec3ToVec3(aabbMax));
-//	}
-//
-//	virtual ~SimpleRealObject()
-//	{
-//		ResourceManager::ReleaseModel(mModel);
-//	}
-//};
-//
-//class Planet :
-//	public SimpleRealObject
-//{
-//protected:
-//	Material * mPlanetMaterial;
-//	Material* mPlanetRingModel;
-//
-//public:
-//	Planet(const wstring& name, const wstring& planetMaterialFileName, const wstring& ringMaterialFileName, const btTransform& transform = btTransform::getIdentity()) :
-//		SimpleRealObject(name, L"PLANET_BASE", transform)
-//	{
-//		ExtendFeatureSet(ObjectFeatureSet::OFS_PLANET);
-//		mPlanetMaterial = ResourceManager::LoadMaterialFromFile(planetMaterialFileName);
-//		mPlanetRingModel = ResourceManager::LoadMaterialFromFile(ringMaterialFileName);
-//		std::cout << (int)this->GetFeatureSet() << endl;
-//	}
-//
-//	virtual void Draw(Graphics::RenderMode renderMode, const glm::mat4& matV, const glm::mat4& matP);
-//
-//	virtual ~Planet()
-//	{
-//		ResourceManager::ReleaseMaterial(mPlanetMaterial);
-//		ResourceManager::ReleaseMaterial(mPlanetRingModel);
-//	}
+
+class SimpleRealObject :
+	public UniqueObject,
+	public BasePhysicalBody,
+	public BaseDrawable
+{
+protected:
+	Texture* mTexturePtr;
+	Sprite* mSprite;
+
+public:
+	SimpleRealObject(const String& name, const String& textureName, b2World* world, const b2BodyDef& bodyDef, const vector<b2FixtureDef>& fixtureDefs) :
+		UniqueObject(name),
+		BaseDrawable(),
+		BasePhysicalBody(world, bodyDef, fixtureDefs)
+	{
+		DebugPrintInfo(String("SimpleRealObject::SimpleRealObject()"));
+		mTexturePtr = TextureManager::GetInstance().LoadTexture(textureName);
+		mSprite = new Sprite();
+		mSprite->setTexture(*mTexturePtr);
+	}
+
+	const Texture* GetTexturePtr() const
+	{
+		return mTexturePtr;
+	}
+
+	Texture* GetTexturePtr()
+	{
+		return mTexturePtr;
+	}
+
+	virtual void Draw(RenderTexture* renderTexture) const;
+
+	virtual ~SimpleRealObject()
+	{
+		DebugPrintInfo(String("SimpleRealObject::~SimpleRealObject()"));
+		TextureManager::GetInstance().ReleaseTexture(mTexturePtr);
+		SafeDelete(mSprite);
+	}
+
 };

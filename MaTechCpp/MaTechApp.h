@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "Scene.h"
 
 using namespace std;
 using namespace sf;
@@ -7,7 +8,10 @@ using namespace sf;
 class MaTechApp
 {
 private:
-	unique_ptr<Window> mMainWindow;		// SFML main window object
+	RenderWindow* mMainWindow;		// SFML main window object
+	Scene* mScene;
+	Sprite* mMainSprite;
+	RenderTexture* mRenderTexture;
 
 public:
 	MaTechApp(String title, int width, int height);
@@ -16,6 +20,7 @@ public:
 	void Run();
 	void Render();
 
-	void AddObject();
+	inline const Scene* GetScene() const { return mScene; }
+	inline Scene* GetScene() { return mScene; }
 };
 
