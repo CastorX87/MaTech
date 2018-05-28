@@ -8,6 +8,29 @@ using namespace sf;
 
 class BaseScenario
 {
-	virtual void Initialize(Scene* scenePtr) = 0;
+protected:
+	Scene* mScene;
+
+public:
+	BaseScenario()
+	{
+		mScene = new Scene();
+	};
+
+	virtual ~BaseScenario()
+	{
+		SafeDelete(mScene);
+	};
+
+	Scene* GetScene()
+	{
+		return mScene;
+	}
+
+	const Scene* GetScene() const
+	{
+		return mScene;
+	}
+
 	virtual void HandleEvents(const Event& windowEvent) = 0;
 };

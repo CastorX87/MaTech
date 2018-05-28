@@ -45,6 +45,9 @@
     <ClInclude Include="BaseScenario.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MenuScenario.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
