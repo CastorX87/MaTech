@@ -12,7 +12,8 @@ enum class ObjectFeatureSet
 	OFS_UNIQUE = 0x00000001,
 	OFS_TRANSFORMABLE = 0x00000002,
 	OFS_DRAWABLE = 0x00000004,
-	OFS_PHYSICAL = 0x00000008 | OFS_TRANSFORMABLE,
+	OFS_BACKGROUND = 0x00000008 | OFS_DRAWABLE,
+	OFS_PHYSICAL = 0x00000010 | OFS_TRANSFORMABLE,
 	OFS_SIMPLE_REAL_OBJECT = OFS_UNIQUE | OFS_PHYSICAL | OFS_DRAWABLE,
 };
 
@@ -138,6 +139,7 @@ public:
 		mTexturePtr = TextureManager::GetInstance().LoadTexture(textureName);
 		mSprite = new Sprite();
 		mSprite->setTexture(*mTexturePtr);
+		ExtendFeatureSet(ObjectFeatureSet::OFS_BACKGROUND);
 	}
 	virtual ~Background()
 	{
