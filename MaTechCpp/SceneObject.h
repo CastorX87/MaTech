@@ -17,7 +17,8 @@ enum class ObjectFeatureSet
 	OFS_SIMPLE_REAL_OBJECT = OFS_UNIQUE | OFS_PHYSICAL | OFS_DRAWABLE,
 };
 
-class BaseObject
+class BaseObject :
+	public NonCopyable
 {
 protected:
 	ObjectFeatureSet	mFeatureSet;
@@ -51,8 +52,7 @@ public:
 };
 
 class UniqueObject :
-	virtual public BaseObject,
-	public NonCopyable
+	virtual public BaseObject
 {
 protected:
 	String mName;
