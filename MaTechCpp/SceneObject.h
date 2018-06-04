@@ -8,13 +8,15 @@ using namespace std;
 
 enum class ObjectFeatureSet
 {
-	OFS_NOTHING = 0x00000000,
-	OFS_UNIQUE = 0x00000001,
-	OFS_TRANSFORMABLE = 0x00000002,
-	OFS_DRAWABLE = 0x00000004,
-	OFS_BACKGROUND = 0x00000008 | OFS_DRAWABLE,
-	OFS_PHYSICAL = 0x00000010 | OFS_TRANSFORMABLE,
-	OFS_CONTROL = 0x00000020 | OFS_DRAWABLE | OFS_TRANSFORMABLE,
+	OFS_NOTHING = 1 << 0,
+	OFS_UNIQUE = 1 << 1,
+	OFS_TRANSFORMABLE = 1 << 2,
+	OFS_DRAWABLE = 1 << 3,
+	OFS_SCALEABLE = 1 << 4,
+	OFS_EVENT_HANDLER = 1 << 5,
+	OFS_BACKGROUND = 1 << 6 | OFS_DRAWABLE,
+	OFS_PHYSICAL = 1 << 7 | OFS_TRANSFORMABLE,
+	OFS_CONTROL = 1 << 8 | OFS_DRAWABLE | OFS_TRANSFORMABLE | OFS_SCALEABLE,
 	OFS_SIMPLE_REAL_OBJECT = OFS_UNIQUE | OFS_PHYSICAL | OFS_DRAWABLE,
 };
 
@@ -87,20 +89,42 @@ protected:
 public:
 	BaseTransformable(const b2Vec2& pos = b2Vec2(0, 0), float angle = 0)
 	{
-		DebugPrintInfo(String("UniqueObject::UniqueObject()"));
+		DebugPrintInfo(String("BaseTransformable::BaseTransformable()"));
 		ExtendFeatureSet(ObjectFeatureSet::OFS_TRANSFORMABLE);
 		mPos = pos;
 		mAngle = angle;
 	}
 	virtual ~BaseTransformable()
 	{
-		DebugPrintInfo(String("UniqueObject::~UniqueObject()"));
+		DebugPrintInfo(String("BaseTransformable::~BaseTransformable()"));
 	}
 
 	virtual b2Vec2	GetPosition() const									{ return mPos; }
 	virtual float		GetAngle() const										{ return mAngle; }
 	virtual void		SetPosition(const b2Vec2& newPos)		{ mPos = newPos; };
 	virtual void		SetAngle(float newAngle)						{ mAngle = newAngle; };
+};
+
+class Scaleable :
+	virtual public BaseObject
+{
+protected:
+	b2Vec2 mScale;
+
+public:
+	Scaleable(const b2Vec2& scale = b2Vec2(0, 0))
+	{
+		DebugPrintInfo(String("BaseScaleable::BaseScaleable()"));
+		ExtendFeatureSet(ObjectFeatureSet::OFS_TRANSFORMABLE);
+		mScale = scale;
+	}
+	virtual ~Scaleable()
+	{
+		DebugPrintInfo(String("BaseScaleable::~BaseScaleable()"));
+	}
+
+	virtual b2Vec2	GetScale() const { return mScale; }
+	virtual void		SetScale(const b2Vec2& newScale) { mScale = newScale; };
 };
 
 class BaseDrawable :
@@ -148,6 +172,25 @@ public:
 	}
 
 	virtual void Draw(RenderTexture* renderTexture) const;
+};
+
+class EventHandler :
+	public BaseObject
+{
+protected:
+	function<void(Event)> mEventFunction;
+
+public:
+	EventHandler(const function<void(Event)>& function)
+	{
+		DebugPrintInfo(String("EventReceiver::EventReceiver()"));
+		ExtendFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER);
+	}
+
+	virtual ~EventHandler()
+	{
+		DebugPrintInfo(String("EventReceiver::~EventReceiver()"));
+	}
 };
 
 class BasePhysicalBody :
