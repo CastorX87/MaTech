@@ -151,6 +151,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BaseScenario.h" />
+    <ClInclude Include="BaseButton.h" />
     <ClInclude Include="MenuScenario.h" />
     <ClInclude Include="TextureManager.cpp" />
     <ClInclude Include="TextureManager.h" />

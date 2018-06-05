@@ -36,6 +36,15 @@ void MaTechApp::Run()
 		{
 			if (event.type == sf::Event::Closed)
 				mMainWindow->close();
+
+			for (auto object : mScenarioPtr->GetScene()->GetObjects())
+			{
+				if (object->HasFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER))
+				{
+					((BaseEventHandler*)dynamic_cast<BaseEventHandler*>(object))->HandleEvent(event);
+				}
+			}
+
 		}
 		Render();
 	}

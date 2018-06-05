@@ -51,6 +51,7 @@ public:
 		{
 			if(it->second.texPtr == texPtr)
 				it->second.refCount--;
+			it++;
 		}
 
 		// Check if there are any textures that has to be freed (refCount <= 0)

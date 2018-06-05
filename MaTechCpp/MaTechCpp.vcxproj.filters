@@ -48,6 +48,9 @@
     <ClInclude Include="MenuScenario.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BaseButton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

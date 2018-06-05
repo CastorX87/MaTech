@@ -105,20 +105,20 @@ public:
 	virtual void		SetAngle(float newAngle)						{ mAngle = newAngle; };
 };
 
-class Scaleable :
+class BaseScaleable :
 	virtual public BaseObject
 {
 protected:
 	b2Vec2 mScale;
 
 public:
-	Scaleable(const b2Vec2& scale = b2Vec2(0, 0))
+	BaseScaleable(const b2Vec2& scale = b2Vec2(0, 0))
 	{
 		DebugPrintInfo(String("BaseScaleable::BaseScaleable()"));
 		ExtendFeatureSet(ObjectFeatureSet::OFS_TRANSFORMABLE);
 		mScale = scale;
 	}
-	virtual ~Scaleable()
+	virtual ~BaseScaleable()
 	{
 		DebugPrintInfo(String("BaseScaleable::~BaseScaleable()"));
 	}
@@ -169,32 +169,42 @@ public:
 	virtual ~Background()
 	{
 		DebugPrintInfo(String("BackgroundDrawable::~BackgroundDrawable()"));
+		SafeDelete(mSprite);
+		TextureManager::GetInstance().ReleaseTexture(mTexturePtr);
 	}
 
 	virtual void Draw(RenderTexture* renderTexture) const;
 };
 
-class EventHandler :
-	public BaseObject
+class BaseEventHandler :
+	virtual public BaseObject
 {
 protected:
-	function<void(Event)> mEventFunction;
+	function<int(const Event&, void*)> mFunction;
+	void* mCustomObjPtr;
 
 public:
-	EventHandler(const function<void(Event)>& function)
+	BaseEventHandler(function<int(const Event&, void*)> eventFunction, void* customObjPtr)
 	{
 		DebugPrintInfo(String("EventReceiver::EventReceiver()"));
 		ExtendFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER);
+		mCustomObjPtr = customObjPtr;
+		mFunction = eventFunction;
 	}
 
-	virtual ~EventHandler()
+	virtual ~BaseEventHandler()
 	{
 		DebugPrintInfo(String("EventReceiver::~EventReceiver()"));
 	}
+
+	virtual int HandleEvent(const Event& event)
+	{
+		return mFunction(event, mCustomObjPtr);
+	};
 };
 
 class BasePhysicalBody :
-	public BaseTransformable
+	virtual public BaseTransformable
 {
 protected:
 	b2World * mWorldPtr;									// Must NOT be deleted!
