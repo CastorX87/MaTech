@@ -150,8 +150,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Background.h" />
     <ClInclude Include="BaseScenario.h" />
     <ClInclude Include="BaseButton.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="MenuScenario.h" />
     <ClInclude Include="TextureManager.cpp" />
     <ClInclude Include="TextureManager.h" />

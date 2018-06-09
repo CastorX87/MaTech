@@ -3,9 +3,9 @@
 
 using namespace sf;
 
-MaTechApp::MaTechApp(String title, int width, int height)
+MaTechApp::MaTechApp(String title, const Vector2i& viewportRes)
 {
-	VideoMode videoMode(width, height, 24);
+	VideoMode videoMode(viewportRes.x, viewportRes.y, 24);
 	ContextSettings contextSettings(32, 0, 4, 3, 0, 0, false);
 	Uint32 style = Style::Default;
 	mMainWindow = new RenderWindow(videoMode, title, style, contextSettings);
@@ -13,7 +13,7 @@ MaTechApp::MaTechApp(String title, int width, int height)
 	mRenderTexture = new RenderTexture();
 	ContextSettings contextSettingsRenderTex;
 	contextSettingsRenderTex.antialiasingLevel = 4;
-	mRenderTexture->create(width, height, contextSettingsRenderTex);
+	mRenderTexture->create(viewportRes.x, viewportRes.y, contextSettingsRenderTex);
 	mRenderTexture->setSmooth(true);
 
 	mMainSprite = new Sprite();
@@ -37,7 +37,7 @@ void MaTechApp::Run()
 			if (event.type == sf::Event::Closed)
 				mMainWindow->close();
 
-			for (auto object : mScenarioPtr->GetScene()->GetObjects())
+			for (auto object : mScenarioPtr->GetScene().GetObjects())
 			{
 				if (object->HasFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER))
 				{
@@ -52,16 +52,19 @@ void MaTechApp::Run()
 
 void MaTechApp::Render()
 {
-	mRenderTexture->clear(Color(255,2,2,0));
-	mMainWindow->clear(Color(255, 255, 0, 255));
+	mRenderTexture->clear(Color(0, 0, 0, 0));
+	mMainWindow->clear(Color(0, 0, 0, 0));
 	
-	for (auto object : mScenarioPtr->GetScene()->GetObjects())
+	sf::RenderStates rs;
+
+	for (auto object : mScenarioPtr->GetScene().GetObjects())
 	{
 		if (object->HasFeatureSet(ObjectFeatureSet::OFS_DRAWABLE))
 		{
-			((BaseDrawable*)dynamic_cast<BaseDrawable*>(object))->Draw(mRenderTexture);
+			((BaseDrawable*)dynamic_cast<BaseDrawable*>(object))->Draw(mRenderTexture, mScenarioPtr->GetCamera(), rs);
 		}
 	}
+
 	mRenderTexture->display();
 	mMainWindow->draw(*mMainSprite);
 	mMainWindow->display();

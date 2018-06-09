@@ -15,7 +15,7 @@ private:
 	BaseScenario* mScenarioPtr;
 
 public:
-	MaTechApp(String title, int width, int height);
+	MaTechApp(String title, const Vector2i& viewportRes);
 	~MaTechApp();
 
 	void Run();
