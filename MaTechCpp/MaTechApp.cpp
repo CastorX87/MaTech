@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "MaTechApp.h"
+#include "BaseButton.h"
 
 using namespace sf;
 
@@ -22,6 +23,7 @@ MaTechApp::MaTechApp(String title, const Vector2i& viewportRes)
 
 MaTechApp::~MaTechApp()
 {
+	//SafeDelete(mScenarioPtr);
 	SafeDelete(mMainSprite);
 	SafeDelete(mRenderTexture);
 	SafeDelete(mMainWindow);
@@ -29,6 +31,8 @@ MaTechApp::~MaTechApp()
 
 void MaTechApp::Run()
 {
+	sf::Clock clock;
+
 	while (mMainWindow->isOpen())
 	{
 		sf::Event event;
@@ -37,17 +41,31 @@ void MaTechApp::Run()
 			if (event.type == sf::Event::Closed)
 				mMainWindow->close();
 
-			for (auto object : mScenarioPtr->GetScene().GetObjects())
+			for (auto object : mScenarioPtr->GetScene()->GetObjects())
 			{
-				if (object->HasFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER))
+				if (object.second->HasFeatureSet(ObjectFeatureSet::OFS_EVENT_HANDLER))
 				{
-					((BaseEventHandler*)dynamic_cast<BaseEventHandler*>(object))->HandleEvent(event);
+					((BaseEventHandler*)dynamic_cast<BaseEventHandler*>(object.second))->HandleEvent(event);
 				}
 			}
 
 		}
+
+		sf::Time elapsed = clock.restart();
+		Physics(elapsed);
 		Render();
 	}
+}
+
+void MaTechApp::Physics(const sf::Time& elapsed)
+{
+	mScenarioPtr->AdvanceTime(elapsed.asSeconds());
+
+	//objPtr = mScenarioPtr->GetScene()->GetObject(L"btnQuit");
+	//BaseButton* btnPtr = ((BaseButton*)dynamic_cast<BaseButton*>(objPtr));
+	//btnPtr->SetPos(hpos);
+	//btnPtr->SetAngle(angle);
+
 }
 
 void MaTechApp::Render()
@@ -57,11 +75,11 @@ void MaTechApp::Render()
 	
 	sf::RenderStates rs;
 
-	for (auto object : mScenarioPtr->GetScene().GetObjects())
+	for (auto object : mScenarioPtr->GetScene()->GetObjects())
 	{
-		if (object->HasFeatureSet(ObjectFeatureSet::OFS_DRAWABLE))
+		if (object.second->HasFeatureSet(ObjectFeatureSet::OFS_DRAWABLE))
 		{
-			((BaseDrawable*)dynamic_cast<BaseDrawable*>(object))->Draw(mRenderTexture, mScenarioPtr->GetCamera(), rs);
+			((BaseDrawable*)dynamic_cast<BaseDrawable*>(object.second))->Draw(mRenderTexture, mScenarioPtr->GetCamera(), rs);
 		}
 	}
 

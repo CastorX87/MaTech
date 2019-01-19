@@ -58,21 +58,36 @@ protected:
 	int mLayerId;
 	int mDrawPriority;
 
-	static Transform GetScreenTransform(Vector2f hPos, Vector2f size, float angle, Vector2f hCenterOffset, Vector2i extendInPixels, Camera cam)
+public:
+	static Transform GetScreenTransformRasterObj(Vector2f translation, Vector2f scale, float rotation, Vector2f hCenterOffset, Vector2i extendInPixels, Camera cam)
 	{
 		float asp = cam.ViewportSize.x / (float)cam.ViewportSize.y;
 		Transform TCamPos = Transform().translate(cam.CenterPos.x, -cam.CenterPos.y);
-		Transform TRot = Transform().rotate(angle, hCenterOffset);
-		Transform TCenterOffset = Transform().translate(hCenterOffset);
+		Transform TRot = Transform().rotate(rotation, Vector2f(hCenterOffset.x, scale.y - hCenterOffset.y));
+		Transform TCenterOffset = Transform().translate(Vector2f(hCenterOffset.x, scale.y - hCenterOffset.y));
 		Transform TCameraOffset = Transform().translate(Vector2f(0.5, (1 / asp) / 2));
-		Transform TPos = Transform().translate(Vector2f(hPos.x, -hPos.y));
-		Transform TScale = Transform().scale(size);
+		Transform TPos = Transform().translate(Vector2f(translation.x, -translation.y));
+		Transform TScale = Transform().scale(scale);
 		Transform TRealToHSize = Transform().scale(Vector2f((float)extendInPixels.x / cam.ViewportSize.x, (float)extendInPixels.y / cam.ViewportSize.x));
 		Transform TScreen = Transform().scale(cam.ViewportSize.x, cam.ViewportSize.x);
 		Transform TZoom = Transform().scale(cam.ZoomFactor, cam.ZoomFactor, cam.ViewportSize.x / 2, cam.ViewportSize.y / 2);
 
 		Transform T = TZoom * TScreen * TCenterOffset.getInverse() * TCamPos.getInverse() * TCameraOffset * TPos  * TRot * TRealToHSize.getInverse() * TScale * TScreen.getInverse();
 
+		return T;
+	}
+
+	static Transform GetScreenTransform(Vector2f translation, Vector2f scale, float rotation, Vector2f hCenterOffset, Camera cam)
+	{
+		return GetScreenTransformRasterObj(translation, scale, rotation, hCenterOffset, Vector2i(cam.ViewportSize.x, cam.ViewportSize.x), cam);
+	}
+
+	static Transform GetGlobalToLocalTransform(Vector2f translation, float rotation)
+	{
+		Transform T;
+		Transform TRot = Transform().rotate(-rotation);
+		Transform TPos = Transform().translate(Vector2f(translation.x, translation.y));
+		T = (TPos * TRot).getInverse();
 		return T;
 	}
 
@@ -105,6 +120,8 @@ protected:
 	function<int(const Event&, void*)> mFunction;
 	void* mCustomObjPtr;
 
+	BaseEventHandler(const BaseEventHandler&) = delete;
+
 public:
 	BaseEventHandler(const function<int(const Event&, void*)>& eventFunction, void* customObjPtr) :
 		BaseObject()
@@ -126,61 +143,69 @@ public:
 	};
 };
 
-//
-//class BasePhysicalBody :
-//	virtual public BaseObject
-//{
-//protected:
-//	b2World * mWorldPtr;									// Must NOT be deleted!
-//	b2Body *mBody;												// Rigid body object. Must be deleted using mWorldPtr
-//	vector<b2Fixture*> mBodyFixturePtrs;	// List of fixtures used by this object. All of them must be deleted using mBody
-//
-//public:
-//	BasePhysicalBody(const String& name) :
-//		BaseObject(name)
-//	{
-//		DebugPrintInfo(String("BasePhysicalBody::BasePhysicalBody()"));
-//		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
-//	}
-//
-//	BasePhysicalBody(b2World* world, const b2BodyDef& bodyDef, const vector<b2FixtureDef>& fixtureDefs) :
-//		BaseTransformable(Vector2f(bodyDef.position.x, bodyDef.position.y), bodyDef.angle)
-//	{
-//		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
-//		mWorldPtr->CreateBody(&bodyDef);
-//	}
-//	virtual ~BasePhysicalBody()
-//	{
-//		DebugPrintInfo(String("BasePhysicalBody::~BasePhysicalBody()"));
-//		for (auto fixturePtr : mBodyFixturePtrs)
-//		{
-//			mBody->DestroyFixture(fixturePtr);
-//		}
-//		mWorldPtr->DestroyBody(mBody);
-//	};
-//
-//	virtual size_t GetFixtureCount() { return mBodyFixturePtrs.size(); }
-//	virtual b2Fixture* GetFixturePtr(int i) { return mBodyFixturePtrs[i]; }
-//	virtual const b2Fixture* GetFixturePtr(int i) const { return mBodyFixturePtrs[i]; }
-//	virtual Vector2f GetHPosition() const override
-//	{
-//		return Vector2f(mBody->GetPosition().x, mBody->GetPosition().y);
-//	}
-//	virtual float GetAngle() const override
-//	{
-//		return mBody->GetAngle();
-//	}
-//	virtual void SetHPosition(const Vector2f& newPos) override
-//	{
-//		mBody->SetTransform(b2Vec2(newPos.x, newPos.y), GetAngle());
-//	}
-//	virtual void SetAngle(float newAngle) override
-//	{
-//		mBody->SetTransform(b2Vec2(GetHPosition().x, GetHPosition().y), newAngle);
-//	}
-//	b2Body* GetBody() { return mBody; }
-//	const b2Body* GetBody() const { return mBody; }
-//};
+
+class BasePhysicalBody :
+	virtual public BaseObject
+{
+protected:
+	b2World * mWorldPtr;									// Must NOT be deleted!
+	b2Body *mBody;												// Rigid body object. Must be deleted using mWorldPtr
+	vector<b2Fixture*> mBodyFixturePtrs;	// List of fixtures used by this object. All of them must be deleted using mBody
+
+public:
+	BasePhysicalBody(const String& name) :
+		BaseObject()
+	{
+		DebugPrintInfo(String("BasePhysicalBody::BasePhysicalBody()"));
+		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
+	}
+
+	BasePhysicalBody(b2World* world, const b2BodyDef& bodyDef, const vector<b2FixtureDef>& fixtureDefs)
+	{
+		mWorldPtr = world;
+
+		ExtendFeatureSet(ObjectFeatureSet::OFS_PHYSICAL);
+		mBody = mWorldPtr->CreateBody(&bodyDef);
+		for(auto& fdef : fixtureDefs)
+		{
+			mBodyFixturePtrs.push_back(mBody->CreateFixture(&fdef));
+		}
+		SetHPosition(Vector2f(bodyDef.position.x, bodyDef.position.y));
+		SetAngle(bodyDef.angle);
+	}
+	virtual ~BasePhysicalBody()
+	{
+		DebugPrintInfo(String("BasePhysicalBody::~BasePhysicalBody()"));
+		for (auto fixturePtr : mBodyFixturePtrs)
+		{
+			mBody->DestroyFixture(fixturePtr);
+		}
+		mWorldPtr->DestroyBody(mBody);
+	};
+
+	virtual size_t GetFixtureCount() { return mBodyFixturePtrs.size(); }
+	virtual b2Fixture* GetFixturePtr(int i) { return mBodyFixturePtrs[i]; }
+	virtual const b2Fixture* GetFixturePtr(int i) const { return mBodyFixturePtrs[i]; }
+	virtual Vector2f GetHPosition() const
+	{
+		return Vector2f(mBody->GetPosition().x, mBody->GetPosition().y);
+	}
+	virtual float GetAngle() const
+	{
+		return mBody->GetAngle() * 180 / -3.14;
+	}
+	virtual void SetHPosition(const Vector2f& newPos)
+	{
+		mBody->SetTransform(b2Vec2(newPos.x, newPos.y), GetAngle());
+	}
+	virtual void SetAngle(float newAngle)
+	{
+		mBody->SetTransform(b2Vec2(GetHPosition().x, GetHPosition().y), newAngle);
+	}
+
+	b2Body* GetBody() { return mBody; }
+	const b2Body* GetBody() const { return mBody; }
+};
 /*
 class SimpleRealObject :
 	public UniqueObject,

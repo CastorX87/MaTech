@@ -19,7 +19,7 @@ public:
 	~MaTechApp();
 
 	void Run();
-
+	void Physics(const sf::Time& elapsed);
 	void Render();
 
 	inline const BaseScenario* GetScenario() const { return mScenarioPtr; }

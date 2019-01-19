@@ -7,17 +7,36 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-	for_each(mObjects.begin(), mObjects.end(), [](auto obj) { SafeDelete(obj); });
+	for (auto& obj: mObjects)
+	{
+		delete obj.second;
+	}
+	mObjects.clear();
 }
 
-BaseObject* Scene::AddObject(BaseObject* newObject)
+BaseObject* Scene::AddObject(const String& name, BaseObject* newObject)
 {
-	mObjects.push_back(newObject);
+	mObjects.insert(std::pair<String, BaseObject*>(name, newObject));
 	return newObject;
 }
 
 void Scene::DeleteObject(BaseObject* object)
 {
-	std::remove(mObjects.begin(), mObjects.end(), object);
-	delete object;
+	String name;
+	for (auto& obj : mObjects)
+	{
+		if (obj.second == object)
+		{
+			name = obj.first;
+			delete obj.second;
+		}
+	}
+	mObjects.erase(name);
+}
+
+void Scene::DeleteObject(const String& name)
+{
+	BaseObject* obj = mObjects[name];
+	mObjects.erase(name);
+	delete obj;
 }

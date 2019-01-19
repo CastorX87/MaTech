@@ -155,6 +155,7 @@
     <ClInclude Include="BaseButton.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="MenuScenario.h" />
+    <ClInclude Include="RealObject.h" />
     <ClInclude Include="TextureManager.cpp" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="MaTechApp.h" />
