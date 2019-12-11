@@ -16,7 +16,7 @@ public:
 	Background(const String& textureName) :
 		BaseDrawable(0, 0)
 	{
-		DebugPrintInfo(String("BackgroundDrawable::BackgroundDrawable()"));
+		DebugPrintInfo(String("Background::Background()"));
 		mTexturePtr = TextureManager::GetInstance().LoadTexture(textureName);
 		mSprite = new Sprite();
 		mSprite->setTexture(*mTexturePtr);
@@ -24,7 +24,7 @@ public:
 
 	virtual ~Background()
 	{
-		DebugPrintInfo(String("BackgroundDrawable::~BackgroundDrawable()"));
+		DebugPrintInfo(String("Background::~Background()"));
 		SafeDelete(mSprite);
 		TextureManager::GetInstance().ReleaseTexture(mTexturePtr);
 	}

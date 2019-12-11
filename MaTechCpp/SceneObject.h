@@ -11,7 +11,7 @@ enum class ObjectFeatureSet
 {
 	OFS_NOTHING					= 1 << 0,		// Base object ha no special features
 	OFS_DRAWABLE				= 1 << 2,		// Stuff to draw
-	OFS_EVENT_HANDLER		= 1 << 3,		// Stuff to notify when new event is received
+	OFS_EVENT_HANDLER			= 1 << 3,		// Stuff to notify when new event is received
 	OFS_PHYSICAL				= 1 << 4,		// Must be updated by Box2D
 };
 

@@ -20,7 +20,7 @@ public:
 		mScene = new Scene();
 		mCamera.ViewportSize = viewportSize;
 		mCamera.CenterPos = Vector2f(0, 0);
-		mCamera.ZoomFactor = 0.2;
+		mCamera.ZoomFactor = 0.1;
 		mWorld = new b2World(b2Vec2(0, -10));
 	};
 

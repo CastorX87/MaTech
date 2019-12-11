@@ -7,7 +7,7 @@ using namespace sf;
 MaTechApp::MaTechApp(String title, const Vector2i& viewportRes)
 {
 	VideoMode videoMode(viewportRes.x, viewportRes.y, 24);
-	ContextSettings contextSettings(32, 0, 4, 3, 0, 0, false);
+	ContextSettings contextSettings(24, 0, 4, 3, 0, 0, false);
 	Uint32 style = Style::Default;
 	mMainWindow = new RenderWindow(videoMode, title, style, contextSettings);
 

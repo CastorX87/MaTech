@@ -59,7 +59,11 @@ public:
 
 		if (mText != nullptr)
 		{
-			renderTexture->draw(*mText);
+			FloatRect textBounds = mText->getLocalBounds();
+			RenderStates rsLocal = rs;
+			Transform T = BaseDrawable::GetScreenTransformRasterObj(this->GetHPosition(), mSize, this->GetAngle(), mSize * 0.5f, Vector2i(textBounds.width, textBounds.height), cam);
+			rsLocal.transform = T;
+			renderTexture->draw(*mText, rsLocal);
 		}
 	}
 };

@@ -50,9 +50,9 @@ int HandleEvents(const Event& event, void* scenario)
 		bj.bodyA = obj1->GetBody();
 		bj.bodyB = obj2->GetBody();
 		bj.collideConnected = false;
-		bj.length = 0.05;
+		bj.length = 0.02;
 		bj.dampingRatio = 0.99;
-		bj.frequencyHz = 2;
+		bj.frequencyHz = 5;
 		bj.localAnchorA = b2Vec2(TP.x, TP.y);
 		bj.localAnchorB = b2Vec2(0, 0);
 		bj.type = b2JointType::e_distanceJoint;
@@ -76,18 +76,21 @@ MenuScenario::MenuScenario(const Vector2i& viewportSize) :
 {
 	mFont = new Font();
 	mFont->loadFromFile("Resources\\Fonts\\Amiko-Regular.ttf");
-	//mScene.AddObject(new Background("Resources\\Textures\\pngtree_test.png"));
-	BaseButton* btnQuit = new BaseButton("Resources\\Textures\\ButtonBackgrountTest.png", L"Kilépés", *mFont, 0, 0, 0, Vector2f(0, 0), Vector2f(0.2, 0.2), 0, &mCamera);
+	//mScene->AddObject(new Background("Resources\\Textures\\pngtree_test.png"));
+	
 	//BaseButton* btnQuit = new BaseButton("Resources\\Textures\\crate.jpg", L"Kilépés", *mFont, 0, 0, 0, Vector2f(0, 0), Vector2f(0.2, 0.2), 0, &mCamera);
 	BaseEventHandler* beh = new BaseEventHandler(::HandleEvents, this);
 	mScene->AddObject("EventHandler", beh);
 	//mScene->AddObject("MouseMoveHandler", new BaseEventHandler(HandleEvents, this));
 
-	btnQuit->RegisterOnClick(OnClick_Quit, this);
+	BaseButton* btnQuit = new BaseButton("Resources\\Textures\\ButtonBackgrountTest.png", L"Kilépés", *mFont, 12, 0, 0, Vector2f(0, 0), Vector2f(0.2, 0.2), 0, &mCamera);
+	btnQuit->RegisterOnClick(OnClick_Quit, this); 
 	mScene->AddObject("btnQuit", btnQuit);
 
-	// Add ground
+	Background* bg = new Background("Resources\\Textures\\ButtonBackgrountTest.png");
+	mScene->AddObject("Background", bg);
 
+	// Add ground
 	{
 		b2BodyDef bodyDef;
 		bodyDef.type = b2BodyType::b2_staticBody;
@@ -119,7 +122,7 @@ MenuScenario::MenuScenario(const Vector2i& viewportSize) :
 		vector<b2FixtureDef> fictureDefs;
 
 		b2PolygonShape groundBox;
-		groundBox.SetAsBox(0.05f, 0.05f);
+		groundBox.SetAsBox(0.2f, 0.1f);
 		b2FixtureDef fd;
 		fd.shape = &groundBox;
 		fd.density = 0.0f;
@@ -127,17 +130,17 @@ MenuScenario::MenuScenario(const Vector2i& viewportSize) :
 		fd.restitution = 0.3f;
 		fictureDefs.push_back(fd);
 		fd.isSensor = true;
-		RealObject* realObj = new RealObject("Resources\\Textures\\crate.jpg", "Hello2", *mFont, 12, 1, 0, Vector2f(0.1, 0.1), &mCamera, this->mWorld, bodyDef, fictureDefs);
+		RealObject* realObj = new RealObject("Resources\\Textures\\crate.jpg", "XXX", *mFont, 72, 1, 0, Vector2f(0.4, 0.2), &mCamera, this->mWorld, bodyDef, fictureDefs);
 		mScene->AddObject("GRAB", realObj);
 	}
 	// Add object
-	for(int i = 0; i < 2; i++)
+	for(int i = 0; i < 20; i++)
 	{
 		b2BodyDef bodyDef;
 		bodyDef.type = b2BodyType::b2_dynamicBody;
-		bodyDef.position.Set(0.0f, 1.0f);
+		bodyDef.position.Set(0.0f + i * 0.2, 1.0f + i * 2);
 		bodyDef.angle = 10;
-		bodyDef.angularDamping = 0.99;
+		bodyDef.angularDamping = 1;
 		bodyDef.linearDamping = 0.99;
 
 		vector<b2FixtureDef> fictureDefs;
